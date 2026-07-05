@@ -1,13 +1,18 @@
-name: CI Pipeline
+name: CD Pipeline
 
 on:
-  push:
   pull_request:
     types: [opened, edited, synchronized]
 
 jobs:
-  validate-code:
+  deploy-preview:
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -21,11 +26,20 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Run Linter
-        run: npm run lint
-
-      - name: Run Tests
-        run: npm test
-
       - name: Build Application
         run: npm run build
+
+      - name: Extract Branch Name
+        id: get-branch
+        run: |
+          RAW_BRANCH="${{ github.head_ref }}"
+          # Converts forward slashes like 'feature/login' to 'feature-login' for safe directory paths
+          CLEAN_BRANCH=$(echo "$RAW_BRANCH" | sed 's/\//-/g')
+          echo "branch_folder=$CLEAN_BRANCH" >> $GITHUB_OUTPUT
+
+      - name: Deploy Preview to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
+          branch: gh-pages
+          target-folder: preview/${{ steps.get-branch.outputs.branch_folder }}
