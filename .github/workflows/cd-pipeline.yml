@@ -14,6 +14,10 @@ jobs:
       id-token: write
       pull-requests: write
 
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -37,12 +41,26 @@ jobs:
           CLEAN_BRANCH=$(echo "$RAW_BRANCH" | sed 's/\//-/g')
           echo "branch_folder=$CLEAN_BRANCH" >> $GITHUB_OUTPUT
 
-      - name: Deploy to GitHub Pages
-        uses: JamesIves/github-pages-deploy-action@v4
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
         with:
-          folder: dist
-          branch: gh-pages
-          target-folder: preview/${{ steps.get-branch.outputs.branch_folder }}
+          ref: gh-pages
+          path: gh-pages-content
+        continue-on-error: true
+
+      - name: Prepare site content
+        run: |
+          mkdir -p gh-pages-content/preview/${{ steps.get-branch.outputs.branch_folder }}
+          cp -r dist/. gh-pages-content/preview/${{ steps.get-branch.outputs.branch_folder }}/
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: gh-pages-content
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
 
       - name: Comment Preview Link on PR
         uses: thollander/actions-comment-pull-request@v2
