@@ -1,9 +1,8 @@
 name: Check Branch Name
 
 on:
-  push:
   pull_request:
-    types: [opened, edited, synchronized]
+    types: [opened, edited, synchronize]
 
 jobs:
   check-branch-name:
