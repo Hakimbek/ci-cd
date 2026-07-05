@@ -1,0 +1,26 @@
+name: Enforce Feature Branch Naming
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, edited, synchronized]
+
+jobs:
+  check-branch-name:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify Branch Name Pattern
+        run: |
+          # Get the source branch name of the PR
+          BRANCH_NAME="${{ github.head_ref }}"
+          
+          echo "Checking branch name: $BRANCH_NAME"
+          
+          # Check if the branch name starts with 'feature/'
+          if [[ ! "$BRANCH_NAME" =~ ^feature/ ]]; then
+            echo "::error::Invalid branch name '$BRANCH_NAME'. All new features must be submitted from a branch starting with 'feature/' (e.g., feature/login-page)."
+            exit 1
+          fi
+          
+          echo "Branch name is valid!"
