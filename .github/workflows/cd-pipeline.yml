@@ -43,7 +43,9 @@ jobs:
           echo "branch_folder=$CLEAN_BRANCH" >> "$GITHUB_OUTPUT"
 
       - name: Build Application
-        run: npm run build -- --base=/${{ github.event.repository.name }}/preview/${{ steps.get-branch.outputs.branch_folder }}/
+        run: npm run build
+        env:
+          PUBLIC_URL: /${{ github.event.repository.name }}/preview/${{ steps.get-branch.outputs.branch_folder }}/
 
       - name: Checkout gh-pages branch
         uses: actions/checkout@v4
