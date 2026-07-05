@@ -16,11 +16,10 @@ jobs:
       contents: read
       pages: write
       id-token: write
-      pull-requests: write
 
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url }}preview/${{ steps.get-branch.outputs.branch_folder }}/
 
     steps:
       - name: Checkout Code
@@ -37,10 +36,7 @@ jobs:
 
       - name: Extract Branch Name
         id: get-branch
-        run: |
-          RAW_BRANCH="${{ github.head_ref }}"
-          CLEAN_BRANCH=$(echo "$RAW_BRANCH" | sed 's/\//-/g')
-          echo "branch_folder=$CLEAN_BRANCH" >> "$GITHUB_OUTPUT"
+        run: echo "branch_folder=$(echo '${{ github.head_ref }}' | sed 's/\//-/g')" >> "$GITHUB_OUTPUT"
 
       - name: Build Application
         run: npm run build
@@ -65,12 +61,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-      - name: Comment Preview Link on PR
-        uses: thollander/actions-comment-pull-request@v2
-        with:
-          message: |
-            🚀 **Preview Deployed Successfully!**
-            You can view the live changes for this PR here:
-            https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/preview/${{ steps.get-branch.outputs.branch_folder }}/
-          comment_tag: preview_link
