@@ -1,26 +1,22 @@
 name: CD Pipeline
 
 on:
-  workflow_run:
-    workflows: ["CI Pipeline"]
-    types:
-      - completed
+  pull_request:
+    types: [ opened, edited, synchronized ]
 
 jobs:
   deploy-to-gh-pages:
     runs-on: ubuntu-latest
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     permissions:
       contents: write
       pages: write
       id-token: write
+      pull-requests: write
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -34,19 +30,25 @@ jobs:
       - name: Build Application
         run: npm run build
 
-      # Dynamically extract the branch name from the workflow run event
       - name: Extract Branch Name
         id: get-branch
         run: |
-          RAW_BRANCH="${{ github.event.workflow_run.head_branch }}"
-          # Replace forward slashes (like feature/login) with dashes for clean folder names
+          RAW_BRANCH="${{ github.head_ref }}"
           CLEAN_BRANCH=$(echo "$RAW_BRANCH" | sed 's/\//-/g')
           echo "branch_folder=$CLEAN_BRANCH" >> $GITHUB_OUTPUT
 
-      # Deploy the output folder (usually 'dist' or 'build') to GitHub Pages
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: dist # Change to 'build' if your build script outputs to 'build'
-          branch: gh-pages # The branch GitHub Pages will serve from
-          target-folder: preview/${{ steps.get-branch.outputs.branch_folder }} # Unique subfolder per branch
+          folder: dist
+          branch: gh-pages
+          target-folder: preview/${{ steps.get-branch.outputs.branch_folder }}
+
+      - name: Comment Preview Link on PR
+        uses: thollander/actions-comment-pull-request@v2
+        with:
+          message: |
+            🚀 **Preview Deployed Successfully!**
+            You can view the live changes for this PR here: 
+            https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/preview/${{ steps.get-branch.outputs.branch_folder }}/
+          comment_tag: preview_link
