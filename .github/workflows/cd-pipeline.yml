@@ -3,6 +3,8 @@ name: CD Pipeline
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    branches:
+      - main
 
 concurrency:
   group: pages-deploy
@@ -19,7 +21,7 @@ jobs:
 
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}preview/${{ steps.get-branch.outputs.branch_folder }}/
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout Code
@@ -34,10 +36,6 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Extract Branch Name
-        id: get-branch
-        run: echo "branch_folder=$(echo '${{ github.head_ref }}' | sed 's/\//-/g')" >> "$GITHUB_OUTPUT"
-
       - name: Build Application
         run: npm run build
 
@@ -50,8 +48,7 @@ jobs:
 
       - name: Prepare site content
         run: |
-          mkdir -p "gh-pages-content/preview/${{ steps.get-branch.outputs.branch_folder }}"
-          cp -r dist/. "gh-pages-content/preview/${{ steps.get-branch.outputs.branch_folder }}/"
+          cp -r dist/. "gh-pages-content/"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
