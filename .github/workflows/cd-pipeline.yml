@@ -2,7 +2,7 @@ name: CD Pipeline
 
 on:
   pull_request:
-    types: [opened, edited, synchronize, reopened]
+    types: [opened, synchronize, reopened]
 
 concurrency:
   group: pages-deploy
@@ -44,8 +44,6 @@ jobs:
 
       - name: Build Application
         run: npm run build
-        env:
-          PUBLIC_URL: /${{ github.event.repository.name }}/preview/${{ steps.get-branch.outputs.branch_folder }}/
 
       - name: Checkout gh-pages branch
         uses: actions/checkout@v4
