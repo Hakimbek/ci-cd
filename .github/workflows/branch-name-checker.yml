@@ -2,9 +2,7 @@ name: Check Branch Name
 
 on:
   pull_request:
-    branches:
-      - main
-    types: [opened, edited, synchronized]
+    types: [opened, synchronize]
 
 jobs:
   check-branch-name:
