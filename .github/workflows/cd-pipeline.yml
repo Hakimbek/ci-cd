@@ -3,6 +3,8 @@ name: CD Pipeline
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    branches:
+      - main
 
 concurrency:
   group: pages-deploy
@@ -16,7 +18,6 @@ jobs:
       contents: read
       pages: write
       id-token: write
-      pull-requests: write
 
     environment:
       name: github-pages
@@ -35,13 +36,6 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Extract Branch Name
-        id: get-branch
-        run: |
-          RAW_BRANCH="${{ github.head_ref }}"
-          CLEAN_BRANCH=$(echo "$RAW_BRANCH" | sed 's/\//-/g')
-          echo "branch_folder=$CLEAN_BRANCH" >> "$GITHUB_OUTPUT"
-
       - name: Build Application
         run: npm run build
 
@@ -54,8 +48,7 @@ jobs:
 
       - name: Prepare site content
         run: |
-          mkdir -p "gh-pages-content/preview/${{ steps.get-branch.outputs.branch_folder }}"
-          cp -r dist/. "gh-pages-content/preview/${{ steps.get-branch.outputs.branch_folder }}/"
+          cp -r dist/. "gh-pages-content/"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
@@ -65,12 +58,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
-      - name: Comment Preview Link on PR
-        uses: thollander/actions-comment-pull-request@v2
-        with:
-          message: |
-            🚀 **Preview Deployed Successfully!**
-            You can view the live changes for this PR here:
-            https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/preview/${{ steps.get-branch.outputs.branch_folder }}/
-          comment_tag: preview_link
